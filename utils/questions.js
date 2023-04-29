@@ -18,7 +18,8 @@ const generateQuestion = (type) => {
     const num2 = Math.floor(Math.random() * 10) + 1;
     const question = `${num1}${operator}${num2}`;
     const answer = eval(`${num1} ${operator} ${num2}`);
-    return { question, answer };
+    const message = {esp:'Resuelva la operación matemática', eng:'Solve the mathematical operation'}
+    return { question, answer, message };
   };
   
   const generateEnglishQuestion = () => {

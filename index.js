@@ -1,6 +1,11 @@
 const express = require('express');
 const dotenv = require('dotenv');
+const swaggerUi = require('swagger-ui-express');
+
+const swaggerDocs = require('./captcha-docs.js');
+
 const connectDB = require('./utils/database');
+
 const captchaRoutes = require('./routes/captcha');
 const healthcheckRoutes = require('./routes/health');
 
@@ -13,6 +18,9 @@ connectDB();
 
 // Middleware para manejar las solicitudes JSON
 app.use(express.json());
+
+//Swagger
+app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 // Rutas para CAPTCHA
 app.use('/captcha', captchaRoutes);

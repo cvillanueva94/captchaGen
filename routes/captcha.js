@@ -7,27 +7,47 @@ const Captcha = require('../models/captcha');
 const {generateQuestion} = require('../utils/questions')
 
 
-// Genera la imagen de CAPTCHA y guarda la respuesta en MongoDB
-router.get('/math', async (req, res) => {
-  // Genera una nueva pregunta de CAPTCHA y su respuesta
-
-  const {question, answer} = generateQuestion('math')
-
-  // Genera la imagen de fondo con un color aleatorio
+/**
+ * @swagger
+ * /captcha:
+ *   get:
+ *     summary: Genera un nuevo CAPTCHA
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: type
+ *         description: UUID del CAPTCHA a validar
+ *         in: path
+ *         required: true
+ *         type: string
+ * 
+ *     responses:
+ *       200:
+ *         description: CAPTCHA generado correctamente
+ *         schema:
+ *           type: object
+ *           properties:
+ *             uuid:
+ *               type: string
+ *             image:
+ *               type: string
+ *       500:
+ *         description: Error al guardar el CAPTCHA en la base de datos
+ */
+router.get('/', async (req, res) => {
+  let { type } = req.params;
+  if(!type) type='math'
+  const {question, message, answer} = generateQuestion(type)
   const backgroundImage = await generateBackgroundImage(question);
-
-  // Genera un UUID para la respuesta de CAPTCHA
   const uuid = v4()
-
-  // Crea un nuevo documento de CAPTCHA con la respuesta y el UUID
   const captcha = new Captcha({ uuid, question, answer });
 
   try {
-    // Guarda el documento de CAPTCHA en MongoDB
     await captcha.save();
 
     res.json({
         uuid,
+        message,
         image:backgroundImage
     })
   } catch (err) {
@@ -36,24 +56,63 @@ router.get('/math', async (req, res) => {
   }
 });
 
-// Ruta para validar la respuesta del usuario
+/**
+ * @swagger
+ * /captcha/{uuid}:
+ *   post:
+ *     summary: Valida un CAPTCHA existente
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - name: uuid
+ *         description: UUID del CAPTCHA a validar
+ *         in: path
+ *         required: true
+ *         type: string
+ *       - name: answer
+ *         description: Respuesta del usuario al CAPTCHA
+ *         in: body
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             answer:
+ *               type: string
+ *     responses:
+ *       200:
+ *         description: CAPTCHA validado correctamente
+ *         schema:
+ *           type: object
+ *           properties:
+ *             message:
+ *               type: string
+ *             isOk:
+ *               type: boolean
+ *       400:
+ *         description: Respuesta incorrecta
+ *         schema:
+ *           type: object
+ *           properties:
+ *             message:
+ *               type: string
+ *             isOk:
+ *               type: boolean
+ *       500:
+ *         description: Error al validar el CAPTCHA en la base de datos
+ */
 router.post('/:uuid', async (req, res) => {
   const { answer } = req.body;
   const { uuid } = req.params;
 
   try {
-    // Busca la respuesta de CAPTCHA en MongoDB
     const captcha = await Captcha.findOne({ uuid });
 
-    // Comprueba si la respuesta del usuario es correcta
     if (captcha && answer === captcha.answer) {
-      res.status(200).send('CAPTCHA validado correctamente');
+      res.status(200).json({message:'CAPTCHA validado correctamente', isOk:true});
     } else {
-      res.status(400).send('Respuesta incorrecta');
+      res.status(400).send({message:'Respuesta incorrecta', isOk:false});
     }
-
-    // Elimina la respuesta de CAPTCHA de MongoDB
-    await captcha.remove();
+    await Captcha.deleteOne({ uuid });
   } catch (err) {
     console.error(err);
     res.status(500).send('Error al validar el CAPTCHA en la base de datos');
