@@ -1,14 +1,13 @@
 {
  "name": "captchaGen",
- "version": "0.0.3",
+ "version": "0.0.4",
  "main": "index.js",
  "license": "MIT",
  "description": "",
  "scripts": {
-  "start": "node ./src/index",
+  "start": "node ./index",
   "test": "jest -i",
-  "lint": "eslint --ext .js,.jsx,.ts,.tsx",
-  "swagger-generate": "node src/swagger-autogen.js"
+  "lint": "eslint --ext .js,.jsx,.ts,.tsx"
  },
  "repository": {
   "type": "git",
